@@ -5,16 +5,36 @@ su flagN, password: passwd
 
 `ssh  level00@172.16.188.130 -p 4242`
 
+## level00 ()
+* Пытаемся что-то найти для flag00 `find / -user flag00  2>/dev/null`
+```
+level00@SnowCrash:~$ find / -user flag00  2>/dev/null
+/usr/sbin/john
+/rofs/usr/sbin/john
+```
+* `cat /usr/sbin/john`
+```
+cdiiddwpgswtgt
+```
+* Видим что символы идут последовательно, зайдем на сайт https://www.dcode.fr/chiffre-cesar и проверим
+```
+nottoohardhere
+```
+* su flag00
+* nottoohardhere
+* getflag
+* su level01 ->
+
 ## level01 (x24ti5gi3x0ol2eh4esiuxias)
 
-* Находим пароль для flag01
+* Находим пароль для flag01 `/etc/passwd`
 * Устанавливаем утилиту brew install john-jumbo
 * Копируем файл с паролями и запустим `john passwd --show`
 * Смотрим в `~/.john` -> `john.pot`, находим флаг: 42hDRfypTqqnw:abcdefg
 
 ## level02 (f2av5il02puano7naaf6adaaf)
 
-* Копируем файл `level02.pcap` на локальную машину
+* Копируем файл `level02.pcap` на локальную машину `scp -P 4242 level02@172.16.188.130:~/level02.pcap ~/.`
 * Устанавливаем `wireshark`
 * Запускаем шарк с этим дампом
 * Фильтруем по data и смотрим пакеты:
